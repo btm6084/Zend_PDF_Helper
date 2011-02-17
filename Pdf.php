@@ -1,6 +1,6 @@
 <?php
 
-require_once 'ZendPDF_Helper/Pdf/Table.php';
+require_once 'Zend/Pdf/Table.php';
 
 /**
  * Encapsulates common logic for handling creation of PDF files.
@@ -17,7 +17,7 @@ require_once 'ZendPDF_Helper/Pdf/Table.php';
  *     color => N,N,N : int,int,int - The color of the text, 0-1 scale (not 0-255)
  *
  */
-class ZendPDF_Helper_Pdf
+class Zend_Pdf
 {
     /**
      * Stores the paper size of the final PDF.
@@ -34,7 +34,8 @@ class ZendPDF_Helper_Pdf
      *
      * @var int
      */
-    private $_margin;
+    private $_sideMargin;
+    private $_heightMargin;
 
     /**
      * The Font to use for text output. Options are:
@@ -91,6 +92,7 @@ class ZendPDF_Helper_Pdf
      */
     private $_signatureFile;
     private $_signatureDate;
+    private $_signatureName;
 
     /**
      * Stores the meta data for layout of the PDF in [row][column] format.
@@ -106,7 +108,7 @@ class ZendPDF_Helper_Pdf
      */
     private $_numTables;
 
-    function ZendPDF_Helper_Pdf()
+    function Zend_Pdf()
     {
         // Require the PDF class.
         Zend_Loader::loadClass('Zend_Pdf');
@@ -135,6 +137,7 @@ class ZendPDF_Helper_Pdf
         // Move pointer to the top of the page.
         $currentHeight = $this->_maxHeight;
 
+        // Add the header image.
         if(!empty($this->_headerImage)) {
             $image = Zend_Pdf_Image::imageWithPath($this->_headerImage);
 
@@ -144,7 +147,7 @@ class ZendPDF_Helper_Pdf
 
             // If the image is bigger than our space.
             if($width > $this->_maxWidth) {
-                $proportion = $width / ($this->_maxWidth - ($this->_margin * 2));
+                $proportion = $width / ($this->_maxWidth - ($this->_sideMargin * 2));
                 $width /= $proportion;
                 $height /= $proportion;
             }
@@ -152,7 +155,7 @@ class ZendPDF_Helper_Pdf
             // Parameters go in: Left, Bottom, Right, Top : X1, Y2, X2, Y1
             // The offset is how far to shift the image right from 0 to achieve centering on the X axis.
             $offset = ($this->_maxWidth - $width) / 2;
-            $x1 = $offset + 0;      $y1 = $this->_maxHeight - ($this->_margin/2);
+            $x1 = $offset + 0;      $y1 = $this->_maxHeight - ($this->_heightMargin/2);
             $x2 = $offset + $width; $y2 = $y1 - $height;
 
             // Draw the header.
@@ -161,16 +164,17 @@ class ZendPDF_Helper_Pdf
             $currentHeight = $y2 - ($this->_fontSize*2);
         } else {
             // If no header, set the first line below the margin.
-            $currentHeight = $this->_maxHeight - $this->_margin;
+            $currentHeight = $this->_maxHeight - $this->_heightMargin;
         }
 
+        // Layout all columns.
         foreach($this->_tables as $table) {
 
             // Maximum usable space for a row.
-            $maxWidth = ($this->_maxWidth - ($this->_margin*2));
+            $maxWidth = ($this->_maxWidth - ($this->_sideMargin*2));
 
             // Gather some information about the table.
-            $colWidths = $table->getColWidths($this->_font, $this->_fontBold);
+            $colWidths = $table->getColWidths($this->_font, $this->_fontBold, $maxWidth);
 
             // Highest number of columns in a single row.
             $numCols = count($colWidths);
@@ -197,19 +201,16 @@ class ZendPDF_Helper_Pdf
                     if($difference < 0) {
                         $difference = 0;
                     }
-                    $x = $this->_margin + $difference;
+                    $x = $this->_sideMargin + $difference;
                 } else {
-                    $x = $this->_margin;
+                    $x = $this->_sideMargin;
                 }
 
-                // The height of the largest column in the row.
-                $currentHeight -= $row->getHeight();
-
                 // Wrap the page if necessary.
-                if($currentHeight <= ($this->_margin/2)) {
+                if($currentHeight <= ($this->_heightMargin/2)) {
                     $currentPage++;
                     $pdf->pages[$currentPage] = $pdf->newPage($this->_paperSize);
-                    $currentHeight = $this->_maxHeight - ($this->_margin);
+                    $currentHeight = $this->_maxHeight - ($this->_heightMargin);
                 }
 
                 // The real key tracks the column to use during colspanned rows.
@@ -231,10 +232,8 @@ class ZendPDF_Helper_Pdf
                     // How far to move it on the X axis for the next column.
                     $offset = $colWidths[$realKey];
 
-                    // Wrap the text if necessary
-                    //$text = $this->_wrapText($col->getText(), $offset, $font, $this->_fontSize);
-
                     // Column spanning.
+                    // Must calculate before wrapping text.
                     if($col->getOption('colspan')) {
                         $colspan = $col->getOption('colspan');
                         if($colspan > $numCols) {
@@ -252,6 +251,10 @@ class ZendPDF_Helper_Pdf
                     } else {
                         $realKey++;
                     }
+
+                    // Wrap the text if necessary
+                    $text = $this->_wrapText($col->getText(), $offset, $font, $this->_fontSize);
+                    $numLines = count($text);
 
                     // Set Text Color
                     if($col->getOption('color')) {
@@ -296,14 +299,28 @@ class ZendPDF_Helper_Pdf
                     }
 
                     // Border @todo: make this an option later. Mostly for debuging position.
-                    //$top = $currentHeight + $row->getHeight();
-                    //$pdf->pages[$currentPage]->drawRectangle($x, $top, $x + $offset, $currentHeight, $fillType = Zend_Pdf_Page::SHAPE_DRAW_STROKE);
+                    /*$borderHeight = $currentHeight;
+                    foreach($text as $key => $line) {
+                        $top = $borderHeight + $row->getHeight();
+                        $pdf->pages[$currentPage]->drawRectangle($x, $top, $x + $offset, $borderHeight, $fillType = Zend_Pdf_Page::SHAPE_DRAW_STROKE);
+                        if($key < ($numLines-1)) {
+                            // Move the line pointer down the page.
+                            $borderHeight -= $row->getHeight();
+                        }
+                    }*/
 
                     // Underline: @todo: make this an option later.
                     //$pdf->pages[$currentPage]->drawLine($x, $currentHeight-1, $x + $offset, $currentHeight-1);
 
                     // Finally, draw the text in question.
-                    $pdf->pages[$currentPage]->drawText($col->getText(), $leftBound + $col->getOption('indent-left'), $currentHeight);
+                    $tempHeight = $currentHeight;
+                    foreach($text as $key => $line) {
+                        $pdf->pages[$currentPage]->drawText($line, $leftBound + $col->getOption('indent-left'), $tempHeight);
+                        if($key < ($numLines-1)) {
+                            // Move the line pointer down the page.
+                            $tempHeight -= $row->getHeight();
+                        }
+                    }
 
                     // Move the x-axis cursor, plus any padding.
                     $x += $offset;
@@ -312,6 +329,13 @@ class ZendPDF_Helper_Pdf
                     if($col->getOption('size')) {
                         $this->setFont();
                     }
+                }
+
+                // Move the line height pointer by the number of actual lines drawn (> 1 when line wrapping).
+                if($numLines > 0) {
+                    $currentHeight -= $row->getHeight() * $numLines;
+                } else {
+                    $currentHeight -= $row->getHeight();
                 }
             }
         }
@@ -335,7 +359,7 @@ class ZendPDF_Helper_Pdf
 
             // Parameters go in: Left, Bottom, Right, Top : X1, Y2, X2, Y1
             // The offset is how far to shift the image right from 0 to achieve centering on the X axis.
-            $offset = $this->_margin;
+            $offset = $this->_sideMargin;
             $x1 = $offset + 0;      $y1 = $currentHeight-5;
             $x2 = $offset + $width; $y2 = $y1 - $height;
 
@@ -343,6 +367,9 @@ class ZendPDF_Helper_Pdf
             $pdf->pages[$currentPage]->drawImage($image, $x1, $y2, $x2, $y1);
 
             $currentHeight = $y2 - ($this->_fontSize);
+            $pdf->pages[$currentPage]->drawText($this->_signatureName, $offset, $currentHeight);
+
+            $currentHeight = $y2 - 1 - ($this->_fontSize)*2;
             $pdf->pages[$currentPage]->drawText($this->_signatureDate, $offset, $currentHeight);
         }
 
@@ -377,11 +404,13 @@ class ZendPDF_Helper_Pdf
      * Sets the font to use for the entire output process.
      * Units are points.
      *
-     *  @param int $this->_margin The margin size to use in units of points.
+     *  @param int $this->_sideMargin The margin size to use for the left/right sides in units of points.
+     *  @param int $this->_heightMargin The margin size to use for the top/bottom in units of points.
      */
-    public function setMargin($margin = 72)
+    public function setMargin($sideMargin = 36, $heightMargin = 54)
     {
-        $this->_margin = $margin;
+        $this->_sideMargin   = $sideMargin;
+        $this->_heightMargin = $heightMargin;
     }
 
     /**
@@ -418,20 +447,21 @@ class ZendPDF_Helper_Pdf
      *
      *
      */
-    public function setSignatureImage($filename, $date)
+    public function setSignatureImage($filename, $date, $name)
     {
         $this->_signatureFile = $filename;
         $this->_signatureDate = $date;
+        $this->_signatureName = $name;
     }
 
     /**
      * Adds a new row to the model with no columns. Moves the row pointer to the new row.
      *
-     * @param object $param - An object of type ZendPDF_Helper_Pdf_Table
+     * @param object $param - An object of type Zend_Pdf_Table
      */
     public function addTable(array $options = array())
     {
-        $this->_tables[$this->_numTables] = new ZendPDF_Helper_Pdf_Table($options);
+        $this->_tables[$this->_numTables] = new Zend_Pdf_Table($options);
         $table = $this->_tables[$this->_numTables];
         $this->_numTables++;
 

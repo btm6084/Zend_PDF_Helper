@@ -1,11 +1,11 @@
 <?php
 
-require_once 'ZendPDF_Helper/Pdf/Col.php';
+require_once 'Zend/Pdf/Col.php';
 
 /**
  * Represents a column in a row in a table in a PDF file.
  */
-class ZendPDF_Helper_Pdf_Row implements IteratorAggregate
+class Zend_Pdf_Row implements IteratorAggregate
 {
     /**
      * Array containing all columns in the row.
@@ -27,7 +27,7 @@ class ZendPDF_Helper_Pdf_Row implements IteratorAggregate
      *
      *
      */
-    public function ZendPDF_Helper_Pdf_Row()
+    public function Zend_Pdf_Row()
     {
         $this->_cols = array();
         $this->_numCols = 0;
@@ -40,7 +40,7 @@ class ZendPDF_Helper_Pdf_Row implements IteratorAggregate
      */
     public function addCol($text = "", $options = array())
     {
-        $this->_cols[$this->_numCols] = new ZendPDF_Helper_Pdf_Col($text, $options);
+        $this->_cols[$this->_numCols] = new Zend_Pdf_Col($text, $options);
 
         $this->_numCols++;
 
@@ -69,8 +69,8 @@ class ZendPDF_Helper_Pdf_Row implements IteratorAggregate
             }
         }
 
-        // We reduce the size calculated by 20% to save on vertical space.
-        return $maxHeight * 0.8;
+        // We reduce the size calculated by 10% to save on vertical space.
+        return $maxHeight * 0.9;
     }
 
     /**

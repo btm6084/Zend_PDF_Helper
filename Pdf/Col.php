@@ -3,7 +3,7 @@
 /**
  * Represents a column in a row in a table in a PDF file.
  */
-class ZendPDF_Helper_Pdf_Col
+class Zend_Pdf_Col
 {
     /**
      * The text value of the column
@@ -23,7 +23,7 @@ class ZendPDF_Helper_Pdf_Col
      * Initialize the column
      *
      */
-    public function ZendPDF_Helper_Pdf_Col($text, array $options = array())
+    public function Zend_Pdf_Col($text, array $options = array())
     {
         if(!isset($options['size'])) {
             $options['size'] = 10;       // Default to 10
