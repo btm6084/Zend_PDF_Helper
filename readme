@@ -1,0 +1,32 @@
+// Please note, this is not a *complete* example. It will not run as-is. Just a few sample calls to the library.
+// Creates a pdf with 2 pages.
+// Requires the following from the Zend_Framework v.1 library:
+// Zend_Cache, Zend_Exception, Zend_Memory, Zend_Pdf
+// PDF now supports page splitting via $pdf->addPage();
+// The first page is setup for you, you don't need to add a page before you start adding tables.
+// Also, updated to expect the presence of an autoloader
+
+
+$pdf = new Framework_Pdf();
+$pdf->setPaperSize(2);
+$pdf->setHeaderImage(getcwd() . '/' . $this->imageDir() . '/logo-main.png');
+
+$table = $pdf->addTable(array('align'=>'justify', 'no_wrap' => True));
+$table->addSpacerRow();
+$table->addRow(array('underline' => True))
+	->addCol("Some Header", array('bold' => true, 'colspan' => 3, 'align' => 'center'));
+$table->addRow()
+	->addCol("Column Text 1", array('bold' => true, 'align' => 'center', 'colspan'=>3))
+	->addCol(" ")
+	->addCol("Column Text 2", array('bold' => true, 'align' => 'center', 'colspan'=>3));
+
+$pdf->addPage();
+$table = $pdf->addTable(array('align'=>'justify', 'no_wrap' => True));
+// Per popular request, an example of adding columns using a loop
+$row = $table->addRow();
+
+for(i = 0; i < $someConstraint; $i++) {
+	$row->addCol("Some Info");
+}
+
+$pdf->build();
