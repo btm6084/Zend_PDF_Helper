@@ -3,63 +3,63 @@
 /**
  * Represents a column in a row in a table in a PDF file.
  */
-class Zend_Pdf_Col
+class Framework_Pdf_Col
 {
-    /**
-     * The text value of the column
-     *
-     * @var string
-     */
-    private $_text;
+	/**
+	 * The text value of the column
+	 *
+	 * @var string
+	 */
+	private $_text;
 
-    /**
-     * Column Options
-     *
-     * @var array
-     */
-    private $_options;
+	/**
+	 * Column Options
+	 *
+	 * @var array
+	 */
+	private $_options;
 
-    /**
-     * Initialize the column
-     *
-     */
-    public function Zend_Pdf_Col($text, array $options = array())
-    {
-        if(!isset($options['size'])) {
-            $options['size'] = 10;       // Default to 10
-        }
+	/**
+	 * Initialize the column
+	 *
+	 */
+	public function Framework_Pdf_Col($text, array $options = array())
+	{
+		if(!isset($options['size'])) {
+			$options['size'] = 10;	   // Default to 10
+		}
 
-        $this->_text     = $text;
-        $this->_options  = $options;
-    }
+		$this->_text	 = $text;
+		$this->_options  = $options;
+	}
 
-    /**
-     * Sets the text for the column
-     *
-     * @param string $text - The text to display in the column.
-     */
-    public function getText()
-    {
-        return $this->_text;
-    }
+	/**
+	 * Sets the text for the column
+	 *
+	 * @param string $text - The text to display in the column.
+	 */
+	public function getText()
+	{
+		return $this->_text;
+	}
 
-    /**
-     * Returns the options for the cell.
-     */
-    public function getOptions()
-    {
-        return $this->_options;
-    }
+	/**
+	 * Returns the options for the cell.
+	 */
+	public function getOptions()
+	{
+		return $this->_options;
+	}
 
-    /**
-     * Returns the options for the cell.
-     */
-    public function getOption($option)
-    {
-        if(isset($this->_options[$option])) {
-            return $this->_options[$option];
-        } else {
-            return null;
-        }
-    }
+	/**
+	 * Returns the options for the cell.
+	 */
+	public function getOption($option)
+	{
+		if(isset($this->_options[$option])) {
+			return $this->_options[$option];
+		} else {
+			return null;
+		}
+	}
 }
